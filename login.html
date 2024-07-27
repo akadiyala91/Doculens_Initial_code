@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>Login and Sign Up page</title>
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css'><link rel="stylesheet" href="login.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<div class="container" id="container">
+	<div class="form-container sign-up-container">
+		<form action="#">
+			<h1>Create Account</h1>
+			<div class="social-container">
+				<a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
+				<a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+				<a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
+			</div>
+			<span>or use your email for registration</span>
+			<input type="text" placeholder="Name" />
+			<input type="email" placeholder="Email" />
+			<input type="password" placeholder="Password" />
+			<button>Sign Up</button>
+		</form>
+	</div>
+	<div class="form-container sign-in-container">
+		<form action="#">
+			<h1>Sign in</h1>
+			<div class="social-container">
+				<a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
+				<a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+				<a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
+			</div>
+			<span>or use your account</span>
+			<input type="email" placeholder="Email" />
+			<input type="password" placeholder="Password" />
+			<a href="#">Forgot your password?</a>
+			<div class="div signbutn">
+				<a href="./index.html"class="index_redirect" >Sign In</a>
+			</div>
+		</form>
+	</div>
+	<div class="overlay-container">
+		<div class="overlay">
+			<div class="overlay-panel overlay-left">
+				<h1>Welcome Back!</h1>
+				<p>To keep connected with us please login with your personal info</p>
+				<button class="ghost" id="signIn">Sign In</button>
+			</div>
+			<div class="overlay-panel overlay-right">
+				<h1>Hello, Friend!</h1>
+				<p>Enter your personal details and start journey with us</p>
+				<button class="ghost" id="signUp">Sign Up</button>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- partial -->
+<script  src="login.js"></script>
+<script>
+	const signInButton = document.getElementById('signIn');
+	const signUpButton = document.getElementById('signUp');
+	const loginForm = document.querySelector('.sign-in-container form');
+	const signUpForm = document.querySelector('.sign-up-container form');
+  
+	signInButton.addEventListener('click', () => {
+	  loginForm.style.display = 'block';
+	  signUpForm.style.display = 'none';
+	});
+  
+	signUpButton.addEventListener('click', () => {
+	  signUpForm.style.display = 'block';
+	  loginForm.style.display = 'none';
+	});
+  
+	loginForm.addEventListener('submit', (e) => {
+	  e.preventDefault();
+	  const email = loginForm.email.value;
+	  const password = loginForm.password.value;
+  
+	  // TO DO: Implement your login logic here
+	  // For demonstration purposes, I'll assume a successful login
+	  if (email === 'example@example.com' && password === 'password') {
+		localStorage.setItem('isLoggedIn', true);
+		window.location.href = 'index.html';
+	  } else {
+		alert('Invalid email or password');
+	  }
+	});
+  
+	signUpForm.addEventListener('submit', (e) => {
+	  e.preventDefault();
+	  const name = signUpForm.name.value;
+	  const email = signUpForm.email.value;
+	  const password = signUpForm.password.value;
+  
+	  // TO DO: Implement your sign-up logic here
+	  // For demonstration purposes, I'll assume a successful sign-up
+	  if (name && email && password) {
+		alert('Sign-up successful! Please log in to continue.');
+	  } else {
+		alert('Please fill in all the fields');
+	  }
+	});
+</script>
+
+</body>
+</html>

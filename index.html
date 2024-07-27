@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Broadrage AI PDF Viewer</title>
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #sidebar {
+            width: 20%;
+            padding: 20px;
+            background-color: #f4f4f4;
+            border-right: 1px solid #ccc;
+        }
+        #pdfViewerContainer {
+            width: 50%;
+            padding: 20px;
+            display: none;
+            border-right: 1px solid #ccc;
+        }
+        #chatContainer {
+            width: 30%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        #logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        #logo img {
+            width: 50px;
+            margin-right: 10px;
+        }
+        #recentFiles {
+            margin-bottom: 20px;
+        }
+        .pdf-name {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        #fileInputContainer {
+            margin-top: 20px;
+        }
+        #samplePrompts {
+            margin-bottom: 20px;
+        }
+        #samplePrompts button {
+            display: block;
+            margin: 5px 0;
+            padding: 10px;
+            width: 100%;
+        }
+        #chatInputContainer {
+            display: flex;
+            margin-top: auto;
+        }
+        #chatInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #sendButton {
+            padding: 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        #closePdfButton {
+            display: none;
+        }
+        #chatOutput {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+        }
+        .chat-message.user {
+            text-align: right;
+        }
+        .chat-message.bot {
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        <div id="logo">
+            <img src="Images\logo.jpg" alt="Logo">
+            <h2>Broadrage AI</h2>
+        </div>
+        <div id="recentFiles">
+            <h3>Recently Opened PDFs</h3>
+            <!-- Placeholder for recently opened PDFs -->
+        </div>
+        <div id="fileInputContainer">
+            <input type="file" id="fileInput" accept="application/pdf">
+        </div>
+    </div>
+
+    <div id="pdfViewerContainer">
+        <button id="closePdfButton">Close PDF</button>
+        <iframe id="pdfViewer" width="100%" height="100%"></iframe>
+    </div>
+
+    <div id="chatContainer">
+        <h2>Chat with me</h2>
+        <div id="samplePrompts">
+            <button>Summarize this document in 100 words in English</button>
+            <button>Extract all the key information in table format</button>
+            <button>Create a bar chart for the net sales of the company from 2015 to 2020</button>
+        </div>
+        <div id="chatOutput"></div>
+        <div id="chatInputContainer">
+            <input type="text" id="chatInput" placeholder="Ask questions about the PDF...">
+            <button id="sendButton">Send</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('fileInput');
+            const pdfViewerContainer = document.getElementById('pdfViewerContainer');
+            const pdfViewer = document.getElementById('pdfViewer');
+            const closePdfButton = document.getElementById('closePdfButton');
+            const recentFilesContainer = document.getElementById('recentFiles');
+            const sendButton = document.getElementById('sendButton');
+            const chatInput = document.getElementById('chatInput');
+            const chatOutput = document.getElementById('chatOutput');
+            const samplePrompts = document.getElementById('samplePrompts');
+        
+            let recentFiles = [];
+            let currentPdf = '';
+        
+            fileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const fileUrl = URL.createObjectURL(file);
+                    displayPdf(fileUrl, file.name);
+                    addToRecentFiles(file.name, fileUrl);
+                }
+            });
+        
+            closePdfButton.addEventListener('click', () => {
+                pdfViewerContainer.style.display = 'none';
+                closePdfButton.style.display = 'none';
+                pdfViewer.src = '';
+            });
+        
+            sendButton.addEventListener('click', handleChatInput);
+            chatInput.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    handleChatInput();
+                }
+            });
+        
+            samplePrompts.addEventListener('click', (event) => {
+                if (event.target.tagName === 'BUTTON') {
+                    const prompt = event.target.textContent;
+                    chatInput.value = prompt;
+                    handleChatInput();
+                }
+            });
+        
+            function displayPdf(fileUrl, fileName) {
+                pdfViewerContainer.style.display = 'block';
+                pdfViewer.src = fileUrl;
+                closePdfButton.style.display = 'block';
+                currentPdf = fileName;
+            }
+        
+            function addToRecentFiles(fileName, fileUrl) {
+                if (!recentFiles.includes(fileName)) {
+                    recentFiles.push(fileName);
+                    const pdfElement = document.createElement('div');
+                    pdfElement.className = 'pdf-name';
+                    pdfElement.textContent = fileName;
+                    pdfElement.addEventListener('click', () => displayPdf(fileUrl, fileName));
+                    recentFilesContainer.appendChild(pdfElement);
+                }
+            }
+        
+            async function handleChatInput() {
+                const query = chatInput.value.trim();
+                if (!query || !currentPdf) return;
+            
+                appendMessage('user', query);
+                chatInput.value = '';
+            
+                try {
+                    let retries = 0;
+                    const maxRetries = 5; // Adjust the maximum number of retries as per your needs
+                    const baseDelayMs = 2000; // Starting delay in milliseconds
+            
+                    while (retries <= maxRetries) {
+                        const response = await fetch('/api/groq', { // Provide the correct endpoint URL
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ query, pdf: currentPdf })
+                        });
+            
+                        const result = await response.json();
+            
+                        if (response.ok) {
+                            appendMessage('bot', result.result);
+                            break; // Exit loop on successful response
+                        } else if (response.status === 429) {
+                            // Rate limit exceeded, apply exponential backoff
+                            const retryAfter = parseInt(response.headers.get('Retry-After')) || baseDelayMs * Math.pow(2, retries);
+                            console.log(`Rate limit exceeded, retrying after ${retryAfter / 1000} seconds...`);
+                            await new Promise(resolve => setTimeout(resolve, retryAfter));
+                        } else {
+                            throw new Error(`Error: ${result.error}`);
+                        }
+            
+                        retries++;
+                    }
+            
+                    if (retries > maxRetries) {
+                        throw new Error('Maximum retry attempts exceeded.');
+                    }
+                } catch (error) {
+                    appendMessage('bot', `Error: ${error.message}`);
+                }
+            }
+            
+            
+            function appendMessage(role, content) {
+                const messageElement = document.createElement('div');
+                messageElement.className = `chat-message ${role}`;
+                messageElement.textContent = content;
+                chatOutput.appendChild(messageElement);
+                chatOutput.scrollTop = chatOutput.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>
